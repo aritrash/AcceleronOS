@@ -1,0 +1,11 @@
+Conversion/
+v1.0/
+v1.0.3/
+
+Readme.docx
+
+*.o
+*.bin
+*.png
+*.tmp
+floppy.img
