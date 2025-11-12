@@ -1,6 +1,5 @@
 Conversion/
 v1.0/
-v1.0.3/
 
 Readme.docx
 
@@ -8,4 +7,5 @@ Readme.docx
 *.bin
 *.png
 *.tmp
+*.raw
 floppy.img
