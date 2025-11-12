@@ -46,7 +46,7 @@ The included `Makefile` automates the entire development workflow:
     * The 512-byte `kernel.bin` is placed in **Sector 2** (`seek=1`).
 * **Virtualization:** Provides a clean `run` target using `qemu-system-i386` for immediate testing and iteration.
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
