@@ -82,7 +82,8 @@ The included `Makefile` automates the entire development workflow:
 
 ## Version History (Releases)
 
-* **v1.0.2 (Current Stable):** Implemented stable keyboard input loop, backspace handling, and echo functionality to complete the basic Command Line Interface (CLI).
+* **v1.0.3 (Current Release):** AcceleronOS v1.0.3: Implemented 'clr' command via BIOS INT 10h. 
+* **v1.0.2 :** Implemented stable keyboard input loop, backspace handling, and echo functionality to complete the basic Command Line Interface (CLI).
 * **v1.0.1 (Initial Release):** Initial successful boot. Custom bootloader implemented for 16-bit real mode setup and successful kernel jump. Displays initial welcome messages.
 
 ## Future Development
