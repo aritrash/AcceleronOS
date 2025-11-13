@@ -62,20 +62,29 @@ The included `Makefile` automates the entire development workflow:
     git clone [https://github.com/aritrash/AcceleronOS.git](https://github.com/aritrash/AcceleronOS.git)
     cd AcceleronOS
     ```
+    
+2. **Install QEMU in terminal:**
+   ```bash
+   pacman -S mingw-w64-x86_64-qemu
+   ```
+   or for Debian packages
+   ```bash
+   sudo apt install qemu-system qemu-utils
+   ```
 
-2.  **Compile and Build the Floppy Image:**
+3.  **Compile and Build the Floppy Image:**
     ```bash
     make all
     # This generates boot.bin, kernel.bin, and floppy.img
     ```
 
-3.  **Run the OS in QEMU:**
+4.  **Run the OS in QEMU:**
     ```bash
     make run
     # QEMU will launch, and you will see the AcceleronOS prompt.
     ```
 
-4.  **Clean up binaries:**
+5.  **Clean up binaries:**
     ```bash
     make clean
     ```
