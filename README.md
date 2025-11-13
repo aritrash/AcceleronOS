@@ -1,108 +1,76 @@
-# AcceleronOS - A Bare-Metal Monolithic Kernel OS
+# AcceleronOS
 
-## Project Status: v1.0.4 (Stable Release)
+## A 16-bit x86 Operating System Kernel
 
-AcceleronOS is a hobbyist Operating System project built entirely from the ground up in **NASM x86-16 bit Assembly language**. It functions as a minimal, monolithic kernel running in **Real Mode** on a virtualized floppy disk.
-
-This project serves as a low-level educational exploration into custom bootloaders, kernel command processing, and BIOS-level hardware interaction.
-
-| Component | Architecture | Toolchain | State |
-| :--- | :--- | :--- | :--- |
-| **Kernel Type** | Monolithic (16-bit) | NASM | Stable |
-| **Boot Standard** | BIOS/Floppy Disk Boot Sector | `dd` Utility | Stable (Loads 2 sectors) |
-| **Primary I/O** | BIOS Interrupts (`INT 10h`, `INT 16h`) | QEMU | Operational |
-| **Filesystem** | Custom FAT16/32 Driver | Planned for v1.0.5 | In Development |
+AcceleronOS is a simple, command-line interface (CLI) based operating system kernel built from scratch in Assembly (NASM) for the 16-bit x86 architecture. This project serves as a foundational layer for understanding low-level computing, boot processes, and basic disk I/O.
 
 ---
 
-## Key Technical Features
+## Version v1.0: CLI Foundation Release
 
-### 1. Custom Bootloader (`boot.asm`)
+This milestone establishes the stable command-line interface and the foundational routines necessary for future filesystem integration.
 
-The boot sector resides at `0x7C00` and executes the following core tasks:
+### Features
 
-* **Mode Initialization:** Sets up the 16-bit Real Mode environment by initializing segment registers (`DS`, `ES`, `SS`) and the Stack Pointer (`SP`).
-* **Kernel Loading:** Uses the BIOS disk service **`INT 13h, AH=02h`** with CHS addressing to load the kernel.
-    * **Sector Count:** The bootloader is configured to read **2 sectors (1024 bytes)** to accommodate the growing kernel size.
-    * **Target Address:** The kernel is loaded into physical memory starting at **`0x10000`** (Segment `0x1000`, Offset `0x0000`). 
-* **Control Transfer:** Performs a **far jump** to the kernel entry point (`0x1000:0x0000`).
+* **Core CLI Interface:** A robust command loop that accepts user input, handles backspace, and executes commands.
+* **Essential Commands:** Implemented commands for system information and interaction:
+    * `clr`: Clears the terminal screen.
+    * `ver`: Displays the kernel version and repository information.
+    * `help`: Displays available commands.
+* **16-bit Kernel:** The entire kernel is built to run in the $0x1000$ memory segment, utilizing BIOS interrupts for I/O and disk access.
+* **Disk I/O Foundation:** Includes the `read_sector` utility with LBA-to-CHS translation, ready for data retrieval.
+* **FAT Initialization Stub:** Contains the complete structure and variable definitions for parsing the FAT Boot Sector (LBA 0).
 
-### 2. Kernel Command-Line Interface (CLI) (`kernel.asm`)
+### Build Requirements
 
-The kernel's primary function is to provide an interactive shell environment via direct BIOS interaction.
+To build and run AcceleronOS, you need the following tools installed on your system:
 
-* **Input Handling:** Uses `INT 16h` for keyboard input, featuring robust **Echo** and **Backspace** logic that manages the screen and the input buffer.
-* **Command Parsing:** Implemented a core string comparison utility (`strequ`) to match user input against defined commands upon pressing Enter.
+1.  **NASM (Netwide Assembler):** Version 2.xx or later.
+2.  **GNU Make:** For automated building of the floppy image.
+3.  **dd:** A utility for low-level data conversion and copying (standard on most Unix-like systems, available via MSYS/Cygwin on Windows).
+4.  **QEMU (Quick EMUlator):** For running and testing the kernel.
 
-| Command | Description | Implementation Detail |
-| :--- | :--- | :--- |
-| **`clr`** | Clears the entire terminal screen. | Uses `INT 10h, AH=06h` (Scroll Window Up) for fast screen clearing. |
-| **`ver`** | Displays the current kernel version and build source. | Prints a predefined multi-line string. |
-| **`help`**| Displays a formatted list of all available commands. | Uses `CR` (13) and `LF` (10) control characters for multi-line output. |
+### Building and Running
 
----
-
-## Build and Execution
-
-The project uses a standard, automated development workflow via a GNU `Makefile`.
-
-### Prerequisites Installation
-
-* **NASM**, **GNU Make**, and **`dd`** are required for compilation.
-* **QEMU** is required for the simplest virtualization environment.
-
-| System | Command to Install QEMU |
-| :--- | :--- |
-| **Debian/Ubuntu (Debian-based)** | `sudo apt update && sudo apt install qemu-system-x86` |
-| **Arch/Manjaro (Arch-based)** | `sudo pacman -S qemu` |
-
-### Workflow Commands
-
-1.  **Clone the Repository:**
+1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/aritrash/AcceleronOS.git](https://github.com/aritrash/AcceleronOS.git)
+    git clone [Your Repository URL]
     cd AcceleronOS
     ```
 
-2.  **Build the Disk Image (`floppy.img`):**
+2.  **Build the floppy image:**
+    The `Makefile` compiles the `boot.asm` (512 bytes) and `kernel.asm` (2048 bytes / 4 sectors) and combines them into `floppy.img`.
     ```bash
-    make all
-    # Compiles boot.bin and kernel.bin, then stitches them into the floppy.img.
+    make
     ```
 
-3.  **Run in QEMU (Recommended):**
+3.  **Run in QEMU:**
+    The `make run` command launches QEMU, booting from the generated floppy image.
     ```bash
     make run
-    # Executes: qemu-system-i386 -fda floppy.img -boot a
     ```
-
-### Running on Other VMs (VirtualBox / VMware)
-
-You can run the generated `floppy.img` on other virtualization software by attaching it as a virtual floppy drive:
-
-1.  **Build the image** using `make all`.
-2.  **Create a new VM** (select "Other" or "MS-DOS" as the operating system type).
-3.  **Configure Storage:** In the VM settings, find the Floppy Disk Controller/Drive option.
-4.  **Attach Image:** Select "Choose/Create a Virtual Floppy Disk" and point it to your locally generated **`floppy.img`** file.
-5.  **Start the VM** and ensure the boot order prioritizes the Floppy Drive.
-
-### Clean up binaries
-
-```bash
-make clean
-```
-
-## Version History (Releases)
-
-* **v1.0.4 (Current Release):** Implemented 'ver' for version information and GitHub link and 'help' for help
-* **v1.0.3 :** Implemented 'clr' command via BIOS INT 10h. 
-* **v1.0.2 :** Implemented stable keyboard input loop, backspace handling, and echo functionality to complete the basic Command Line Interface (CLI).
-* **v1.0.1 (Initial Release):** Initial successful boot. Custom bootloader implemented for 16-bit real mode setup and successful kernel jump. Displays initial welcome messages.
-
-## Future Development
-
-* **Filesystem Management:** Develop routines for reading and writing data to the disk, starting with a simple FAT12 implementation. 
-* **Protected Mode:** Transition the OS from 16-bit Real Mode to 32-bit Protected Mode for access to more memory and advanced features.
+    To stop QEMU, press `Ctrl+A` then `X`.
 
 ---
-*(C) Asta Epsilon Group, 2025. This project is provided for educational purposes.*
+
+## Architecture and Memory Layout 
+
+The kernel uses a standard floppy boot sequence:
+
+| Component | Location (Physical Address) | Size (Sectors) | Purpose |
+| :--- | :--- | :--- | :--- |
+| **BIOS** | > 0xF0000 | N/A | Provides `INT 10h` (Video) and `INT 13h` (Disk) services. |
+| **Boot Sector** | 0x7C00 | 1 | Loads the kernel, sets up initial segments, and jumps to 0x1000:0x0000. |
+| **Kernel Code/Data** | 0x10000 ($0x1000:0x0000$) | 4 | Executes the main CLI logic and low-level routines. |
+
+The kernel uses the $0x1000$ segment for code, data, and its stack ($0x1000:0xFFFE$).
+
+---
+
+## Copyright and Licensing
+
+AcceleronOS is provided under the terms of the **MIT License**.
+
+**Copyright (C) Asta Epsilon Group, 2025**
+
+See the `LICENSE` file for more details.
