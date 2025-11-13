@@ -34,7 +34,7 @@ To build and run AcceleronOS, you need the following tools installed on your sys
 
 1.  **Clone the repository:**
     ```bash
-    git clone [Your Repository URL]
+    git clone https://github.com/aritrash/AcceleronOS
     cd AcceleronOS
     ```
 
