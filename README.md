@@ -91,14 +91,13 @@ The included `Makefile` automates the entire development workflow:
 
 ## Version History (Releases)
 
-* **v1.0.4 :** Implemented 'ver' for version information and GitHub link and 'help' for help
+* **v1.0.4 (Current Release):** Implemented 'ver' for version information and GitHub link and 'help' for help
 * **v1.0.3 :** Implemented 'clr' command via BIOS INT 10h. 
 * **v1.0.2 :** Implemented stable keyboard input loop, backspace handling, and echo functionality to complete the basic Command Line Interface (CLI).
 * **v1.0.1 (Initial Release):** Initial successful boot. Custom bootloader implemented for 16-bit real mode setup and successful kernel jump. Displays initial welcome messages.
 
 ## Future Development
 
-* **Command Parsing:** Implement basic command interpretation (e.g., `help`, `clear`).
 * **Filesystem Management:** Develop routines for reading and writing data to the disk, starting with a simple FAT12 implementation. 
 * **Protected Mode:** Transition the OS from 16-bit Real Mode to 32-bit Protected Mode for access to more memory and advanced features.
 
