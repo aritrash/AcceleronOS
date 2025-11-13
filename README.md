@@ -1,93 +1,96 @@
-# AcceleronOS - A Bare-Metal Command-Line Operating System
+# AcceleronOS - A Bare-Metal Monolithic Kernel OS
 
-## Project Overview
+## Project Status: v1.0.4 (Stable Release)
 
-**AcceleronOS** is a minimal, monolithic kernel Operating System designed and implemented entirely in **NASM x86-16 bit Assembly language**. It currently runs as a floppy-disk image on virtual machines (QEMU/VirtualBox) and provides a stable, interactive Command-Line Interface (CLI) environment.
+AcceleronOS is a hobbyist Operating System project built entirely from the ground up in **NASM x86-16 bit Assembly language**. It functions as a minimal, monolithic kernel running in **Real Mode** on a virtualized floppy disk.
 
-This project was built from scratch, including a custom bootloader and kernel, and serves as a hands-on exploration of low-level systems architecture, memory management, and BIOS/Hardware interaction.
+This project serves as a low-level educational exploration into custom bootloaders, kernel command processing, and BIOS-level hardware interaction.
 
-| Core Components | Technology Stack | Status |
-| :--- | :--- | :--- |
-| **Bootloader** | NASM Assembly, BIOS Interrupts (`INT 13h`) | Stable (Loads Kernel) |
-| **Kernel** | NASM Assembly, BIOS Interrupts (`INT 10h`, `INT 16h`) | Stable (CLI Shell) |
-| **Toolchain** | NASM, GNU `make`, `dd`, QEMU | Operational |
+| Component | Architecture | Toolchain | State |
+| :--- | :--- | :--- | :--- |
+| **Kernel Type** | Monolithic (16-bit) | NASM | Stable |
+| **Boot Standard** | BIOS/Floppy Disk Boot Sector | `dd` Utility | Stable (Loads 2 sectors) |
+| **Primary I/O** | BIOS Interrupts (`INT 10h`, `INT 16h`) | QEMU | Operational |
+| **Filesystem** | Custom FAT16/32 Driver | Planned for v1.0.5 | In Development |
+
+---
 
 ## Key Technical Features
 
-This system is built without the use of high-level languages (like C) or external libraries, forcing direct interaction with the underlying hardware via BIOS calls.
-
 ### 1. Custom Bootloader (`boot.asm`)
 
-The 512-byte boot sector performs all necessary initialization steps:
+The boot sector resides at `0x7C00` and executes the following core tasks:
 
-* **16-bit Real Mode Initialization:** Sets up the essential segment registers (`DS`, `ES`, `SS`) and Stack Pointer (`SP`).
-* **Kernel Loading:** Utilizes the BIOS disk services (`INT 13h`) with Cylinder-Head-Sector (CHS) addressing to load **one 512-byte sector** (the kernel) from the floppy image.
-* **Target Memory Map:** The kernel is loaded into **physical memory address `0x10000`** (Segment `0x1000`, Offset `0x0000`). 
-* **Control Transfer:** Performs a **far jump** to `0x1000:0x0000` to execute the kernel.
+* **Mode Initialization:** Sets up the 16-bit Real Mode environment by initializing segment registers (`DS`, `ES`, `SS`) and the Stack Pointer (`SP`).
+* **Kernel Loading:** Uses the BIOS disk service **`INT 13h, AH=02h`** with CHS addressing to load the kernel.
+    * **Sector Count:** The bootloader is configured to read **2 sectors (1024 bytes)** to accommodate the growing kernel size.
+    * **Target Address:** The kernel is loaded into physical memory starting at **`0x10000`** (Segment `0x1000`, Offset `0x0000`). 
+* **Control Transfer:** Performs a **far jump** to the kernel entry point (`0x1000:0x0000`).
 
-### 2. Monolithic Kernel (`kernel.asm`)
+### 2. Kernel Command-Line Interface (CLI) (`kernel.asm`)
 
-The core kernel handles system interaction and the user environment:
+The kernel's primary function is to provide an interactive shell environment via direct BIOS interaction.
 
-* **CLI Implementation:** Provides an interactive shell prompt (`root@acceleron / >`).
-* **Keyboard I/O Handling:** Uses the BIOS keyboard service (`INT 16h`) to read key presses without polling.
-* **Echo and Backspace Logic:** Implements fundamental text editing features:
-    * Prints (echoes) printable characters to the screen immediately using `INT 10h`.
-    * Handles the **Backspace (ASCII 8)** character by erasing the character on the screen and correctly moving the input buffer pointer (`DI`).
-* **Command Buffer:** Stores typed input in a 128-byte `input_buffer` and terminates it with a `NULL` byte (0x00) upon pressing Enter.
+* **Input Handling:** Uses `INT 16h` for keyboard input, featuring robust **Echo** and **Backspace** logic that manages the screen and the input buffer.
+* **Command Parsing:** Implemented a core string comparison utility (`strequ`) to match user input against defined commands upon pressing Enter.
 
-### 3. Build & Run Environment
+| Command | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **`clr`** | Clears the entire terminal screen. | Uses `INT 10h, AH=06h` (Scroll Window Up) for fast screen clearing. |
+| **`ver`** | Displays the current kernel version and build source. | Prints a predefined multi-line string. |
+| **`help`**| Displays a formatted list of all available commands. | Uses `CR` (13) and `LF` (10) control characters for multi-line output. |
 
-The included `Makefile` automates the entire development workflow:
+---
 
-* **Assembly:** Uses `nasm` to compile `boot.asm` and `kernel.asm` into raw binaries.
-* **Image Creation:** Employs the `dd` utility to construct a standard **1.44MB floppy image (`floppy.img`)**.
-    * The 512-byte `boot.bin` is placed in **Sector 1** (`count=1`).
-    * The 512-byte `kernel.bin` is placed in **Sector 2** (`seek=1`).
-* **Virtualization:** Provides a clean `run` target using `qemu-system-i386` for immediate testing and iteration.
+## Build and Execution
 
-## Getting Started
+The project uses a standard, automated development workflow via a GNU `Makefile`.
 
-### Prerequisites
+### Prerequisites Installation
 
-1.  **NASM (Netwide Assembler):** Required for compiling the assembly source code.
-2.  **GNU Make:** Required for the build automation.
-3.  **QEMU:** Required for virtualization and testing the OS image.
-4.  **`dd` utility:** Required for building the disk image (typically pre-installed on Linux/macOS).
+* **NASM**, **GNU Make**, and **`dd`** are required for compilation.
+* **QEMU** is required for the simplest virtualization environment.
 
-### Build & Run
+| System | Command to Install QEMU |
+| :--- | :--- |
+| **Debian/Ubuntu (Debian-based)** | `sudo apt update && sudo apt install qemu-system-x86` |
+| **Arch/Manjaro (Arch-based)** | `sudo pacman -S qemu` |
+
+### Workflow Commands
 
 1.  **Clone the Repository:**
     ```bash
     git clone [https://github.com/aritrash/AcceleronOS.git](https://github.com/aritrash/AcceleronOS.git)
     cd AcceleronOS
     ```
-    
-2. **Install QEMU in terminal:**
-   ```bash
-   pacman -S mingw-w64-x86_64-qemu
-   ```
-   or for Debian packages
-   ```bash
-   sudo apt install qemu-system qemu-utils
-   ```
 
-3.  **Compile and Build the Floppy Image:**
+2.  **Build the Disk Image (`floppy.img`):**
     ```bash
     make all
-    # This generates boot.bin, kernel.bin, and floppy.img
+    # Compiles boot.bin and kernel.bin, then stitches them into the floppy.img.
     ```
 
-4.  **Run the OS in QEMU:**
+3.  **Run in QEMU (Recommended):**
     ```bash
     make run
-    # QEMU will launch, and you will see the AcceleronOS prompt.
+    # Executes: qemu-system-i386 -fda floppy.img -boot a
     ```
 
-5.  **Clean up binaries:**
-    ```bash
-    make clean
-    ```
+### Running on Other VMs (VirtualBox / VMware)
+
+You can run the generated `floppy.img` on other virtualization software by attaching it as a virtual floppy drive:
+
+1.  **Build the image** using `make all`.
+2.  **Create a new VM** (select "Other" or "MS-DOS" as the operating system type).
+3.  **Configure Storage:** In the VM settings, find the Floppy Disk Controller/Drive option.
+4.  **Attach Image:** Select "Choose/Create a Virtual Floppy Disk" and point it to your locally generated **`floppy.img`** file.
+5.  **Start the VM** and ensure the boot order prioritizes the Floppy Drive.
+
+### Clean up binaries
+
+```bash
+make clean
+```
 
 ## Version History (Releases)
 
